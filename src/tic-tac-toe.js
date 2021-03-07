@@ -1,8 +1,7 @@
 let ticTacToe;
-const playerOne = '\u25EF'
-const playerTwo = '\u2716'
+const playerOne = '\u2716' // X
+const playerTwo = '\u25EF' // O
 const playerAi = playerTwo
-const playerHuman = playerOne
 
 if (typeof window != "undefined") {
     window.onload = function () {
@@ -147,14 +146,14 @@ function TicTacToe(grid) {
         console.log('21: ' + this.get(2, 1) + ' 22: ' + this.get(2, 2) + ' 23: ' + this.get(2, 3))
         console.log('31: ' + this.get(3, 1) + ' 32: ' + this.get(3, 2) + ' 33: ' + this.get(3, 3))
 
-                if (this.get(1, 1) === player && this.get(1, 2) === player && this.get(1, 3) === player) {
-                if (this.get(2, 1) === player && this.get(2, 2) === player && this.get(2, 3) === player) {
-                 if (this.get(3, 1) === player && this.get(3, 2) === player && this.get(3, 3) === player) {
+        if (this.get(1, 1) === player && this.get(1, 2) === player && this.get(1, 3) === player) {
+            if (this.get(2, 1) === player && this.get(2, 2) === player && this.get(2, 3) === player) {
+                if (this.get(3, 1) === player && this.get(3, 2) === player && this.get(3, 3) === player) {
                 }
                 this.win(player, 1, 2)
-                }
+            }
 
-       }
+        }
     }
 
     this.choose = function (event, element) {
@@ -177,29 +176,67 @@ function TicTacToe(grid) {
         }
     }
 
-    this.aiMove = function () {
-        for (let i = 1; i <= 3; i++) {
-            for (let j = 1; j <= 3; j++) {
-                if (!this.get(i, j)) {
-                    let board = this.getBoard()
-                    board[i - 1][j - 1] = playerAi
-                    const result = this.getScore(board)
-                    this.set(i, j, '"' + result + '"')
-                    // this.set(i, j, playerAi)
-                    // return
-                }
-            }
-        }
-    }
-
     this.getBoard = function () {
-        let board = Array.from(new Array(3), () => new Array(3))
+        let board = Array.from(Array(3), () => new Array(3))
         for (let r = 1; r <= 3; r++) {
             for (let c = 1; c <= 3; c++) {
                 board[r - 1][c - 1] = this.get(r, c)
             }
         }
         return board
+    }
+
+    this.aiMove = function () {
+        let board = this.getBoard()
+        for (let r = 1; r <= 3; r++) {
+            for (let c = 1; c <= 3; c++) {
+                if (!board[r - 1][c - 1]) {
+                    let nextBoard = _.cloneDeep(board)
+                    nextBoard[r - 1][c - 1] = playerAi
+                    let result = this.getScore(nextBoard)
+                    if (!result) {
+                        result = this.minMaxScore(nextBoard, playerOne === playerAi ? playerTwo : playerOne)
+                    }
+                    this.set(r, c, typeof result !== 'undefined' ? '"' + result + '"' : '"U"')
+                    // if (result === 1) {
+                    //
+                    // }
+                }
+            }
+        }
+    }
+
+    this.minMaxScore = function (board, player) {
+        let result
+        let undefinedCells = []
+        for (let r = 0; r < 3; r++) {
+            for (let c = 0; c < 3; c++) {
+                if (board[r][c] === '' || board[r][c].startsWith('"')) {
+                    let nextBoard = _.cloneDeep(board)
+                    nextBoard[r][c] = player
+                    let nextResult = this.getScore(nextBoard)
+                    if (typeof nextResult === 'undefined') {
+                        undefinedCells.push({ row: r, column: c })
+                        continue
+                    }
+                    if (player !== playerAi) {
+                        result = result ? Math.min(result, nextResult) : nextResult
+                        if (result === -1) {
+                            return -1
+                        }
+                    } else {
+                        result = result ? Math.max(result, nextResult) : nextResult
+                        if (result === 1) {
+                            return 1
+                        }
+                    }
+                }
+            }
+        }
+        if (undefinedCells.length === 0) {
+            return result
+        }
+        // TODO define all undefined
     }
 
     this.isWin = function (board, player) {
@@ -209,36 +246,26 @@ function TicTacToe(grid) {
         if (board[0][2] === player && board[1][1] === player && board[2][0] === player) {
             return true
         }
-
         for (let i = 0; i < 3; i++) {
             if (board[i][0] === player && board[i][1] === player && board[i][2] === player) {
                 return true
             }
         }
-
         for (let i = 0; i < 3; i++) {
             if (board[0][i] === player && board[1][i] === player && board[2][i] === player) {
                 return true
             }
         }
-        return false
+        return false;
     }
 
-
-    this.getScore = function(board) {
-        // TODO return 1 if palayerAi win
-        // return -1 if playerHuman win
-        // return 0 if game over
-        // return undefined in other cases
-
+    this.getScore = function (board) {
         if (this.isWin(board, playerAi)) {
             return 1
         }
-        if (this.isWin(board, playerHuman)) {
+        if (this.isWin(board, playerAi)) {
             return -1
         }
-
-        // check if game over
         for (let r = 1; r <= 3; r++) {
             for (let c = 1; c <= 3; c++) {
                 if (board[r - 1][c - 1] === '') {
@@ -246,7 +273,6 @@ function TicTacToe(grid) {
                 }
             }
         }
-        return 0
+        return 0;
     }
-
 }
